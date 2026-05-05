@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 /* ================================================================
-   Apple-Inspired Design System — AI PPT Generator v2
+   Apple-Inspired Design System — AI PPT Generator v4
    ================================================================ */
 
 /* ---- CSS Variables ---- */
@@ -417,14 +417,20 @@ header .logo i {
    PREVIEW TOOLBAR
    ================================================================ */
 #previewToolbar {
-  height: var(--toolbar-height); min-height: var(--toolbar-height);
+  min-height: var(--toolbar-height);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 12px; gap: 8px;
+  padding: 4px 12px; gap: 8px;
   background: var(--glass-bg);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--glass-border);
   transition: background var(--transition-smooth);
+  flex-wrap: wrap;
+  overflow: visible;
+}
+#previewToolbar .toolbar-left {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap;
 }
 #previewToolbar .tabs {
   display: flex; gap: 2px;
@@ -456,7 +462,7 @@ header .logo i {
   background: rgba(128,128,128,0.08);
 }
 #chatToggleBtn {
-  padding: 5px 14px;
+  padding: 5px 12px;
   border: none; background: transparent;
   color: var(--text-secondary);
   cursor: pointer; font-size: 12px; font-weight: 500;
@@ -466,6 +472,7 @@ header .logo i {
   letter-spacing: 0.01em;
   white-space: nowrap;
   display: flex; align-items: center; gap: 5px;
+  margin-left: 2px;
 }
 #chatToggleBtn i { font-size: 11px; }
 #chatToggleBtn:hover {
@@ -481,6 +488,8 @@ header .logo i {
 
 #previewToolbar .slide-nav {
   display: flex; align-items: center; gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 #previewToolbar .slide-nav button {
   width: 28px; height: 28px; border-radius: var(--radius-full);
@@ -683,8 +692,8 @@ header .logo i {
   header { padding: 0 14px; }
   header .logo { font-size: 14px; }
   .msg .bubble { font-size: 12px; }
-  #previewToolbar { padding: 0 8px; }
-  #previewToolbar .tab-btn, #chatToggleBtn { padding: 4px 10px; font-size: 11px; }
+  #previewToolbar { padding: 0 8px; gap: 4px; }
+  #previewToolbar .tab-btn, #chatToggleBtn { padding: 3px 10px; font-size: 11px; }
 }
 
 /* ================================================================
@@ -721,6 +730,7 @@ header .logo i {
   header .logo i { font-size: 16px; }
   .header-actions button { width: 28px; height: 28px; font-size: 11px; }
   #previewContent { padding: 8px; }
+  #previewToolbar { padding: 0 6px; gap: 4px; }
   #previewToolbar .slide-nav button { width: 34px; height: 34px; font-size: 13px; }
   #slideCounter { font-size: 10px; min-width: 40px; }
   #inputBar { padding: 8px 10px; }
@@ -732,14 +742,19 @@ header .logo i {
 }
 
 @media (max-width: 380px) {
-  #previewToolbar { height: 38px; min-height: 38px; padding: 0 6px; gap: 4px; }
-  #previewToolbar .tab-btn, #chatToggleBtn { padding: 3px 8px; font-size: 10px; }
-  #previewToolbar .slide-nav button { width: 28px; height: 28px; font-size: 10px; }
+  #previewToolbar { min-height: 36px; padding: 2px 4px; gap: 3px; }
+  #previewToolbar .toolbar-left { gap: 2px; }
+  #previewToolbar .tab-btn, #chatToggleBtn { padding: 2px 6px; font-size: 10px; }
+  #previewToolbar .slide-nav { gap: 3px; }
+  #previewToolbar .slide-nav button { width: 24px; height: 24px; font-size: 9px; }
   #previewContent { padding: 4px; }
   #chatPanel { height: 62%; max-height: 62%; }
   header { height: 40px; min-height: 40px; }
   #messages { padding: 10px 10px 4px; }
   .msg .bubble { font-size: 12px; padding: 7px 10px; }
+  #slideCounter { font-size: 10px; min-width: 36px; }
+  #zoomDisplay { font-size: 10px; min-width: 34px; padding: 1px 4px; }
+  .nav-sep { display: none; }
 }
 
 /* ================================================================
@@ -842,7 +857,7 @@ body.compact .compact-close-btn:hover {
     <button class="fs-exit" onclick="exitFullscreen()" title="Exit fullscreen (Esc)"><i class="fa-solid fa-xmark"></i></button>
     <iframe id="fsSlideFrame" sandbox="allow-same-origin"></iframe>
     <span class="fs-counter" id="fsCounter">1 / 5</span>
-    <span class="fs-hint" id="fsHint">Click to advance · Esc to exit</span>
+    <span class="fs-hint" id="fsHint">Wheel/Click to advance · Esc to exit</span>
   </div>
 
   <div id="app">
@@ -881,13 +896,15 @@ body.compact .compact-close-btn:hover {
       <!-- Preview Panel -->
       <div id="previewPanel">
         <div id="previewToolbar">
-          <div class="tabs">
-            <button class="tab-btn active" data-tab="preview" id="tabPreview">🎬 <span id="tabPreviewLabel">Preview</span></button>
-            <button class="tab-btn" data-tab="code" id="tabCode"><i class="fa-solid fa-code"></i> <span id="tabCodeLabel">Code</span></button>
+          <div class="toolbar-left">
+            <div class="tabs">
+              <button class="tab-btn active" data-tab="preview" id="tabPreview">🎬 <span id="tabPreviewLabel">Preview</span></button>
+              <button class="tab-btn" data-tab="code" id="tabCode"><i class="fa-solid fa-code"></i> <span id="tabCodeLabel">Code</span></button>
+            </div>
+            <button id="chatToggleBtn" onclick="toggleChatPanel()" title="Toggle chat panel">
+              <i class="fa-solid fa-table-columns"></i>
+            </button>
           </div>
-          <button id="chatToggleBtn" onclick="toggleChatPanel()" title="Toggle chat panel">
-            <i class="fa-solid fa-table-columns"></i>
-          </button>
           <div class="slide-nav" id="slideNav">
             <button id="btnZoomOut" onclick="zoomOut()" title="Zoom out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
             <span id="zoomDisplay" onclick="resetZoom()" title="Click to reset zoom">100%</span>
@@ -938,12 +955,13 @@ body.compact .compact-close-btn:hover {
 
 <script>
 /* ================================================================
-   SAP AI PPT Generator — Static Extension v3
+   SAP AI PPT Generator — Static Extension v4
    - Per-slide MCP tools (add_slides, update_slide, generate_ppt, get_slide_source)
-   - Fullscreen presentation mode (click/arrow keys to navigate, Esc to exit)
+   - Fullscreen presentation mode (click/arrow keys/wheel to navigate, Esc to exit)
    - localStorage caching with restore
    - Per-slide code viewing with scroll fix
    - Download source + Reset PPT
+   - Responsive toolbar with wrapping
    ================================================================ */
 
 const $ = s => document.querySelector(s);
@@ -1039,7 +1057,7 @@ const i18n = {
     cacheRestored: '已从缓存恢复 {0} 页幻灯片',
     downloadFilename: 'ai-ppt-slides.html',
     fullscreen: '全屏放映',
-    fsHint: '点击翻页 · 按Esc退出',
+    fsHint: '滚轮/点击翻页 · 按Esc退出',
     fsExit: '退出全屏 (Esc)'
   },
   en: {
@@ -1079,7 +1097,7 @@ const i18n = {
     cacheRestored: 'Restored {0} slides from cache',
     downloadFilename: 'ai-ppt-slides.html',
     fullscreen: 'Fullscreen presentation',
-    fsHint: 'Click to advance · Esc to exit',
+    fsHint: 'Wheel/Click to advance · Esc to exit',
     fsExit: 'Exit fullscreen (Esc)'
   }
 };
@@ -1516,7 +1534,16 @@ function showHint() {
   _fsHintTimer = setTimeout(() => { fsHint.classList.add('fade'); }, 4000);
 }
 
-// Click on fullscreen overlay → advance slide
+// Wheel in fullscreen — scroll up/down to navigate slides (throttled)
+let _fsWheelThrottle = false;
+fullscreenOverlay.addEventListener('wheel', e => {
+  e.preventDefault();
+  if (_fsWheelThrottle) return;
+  _fsWheelThrottle = true;
+  if (e.deltaY > 0) fsNext(); else fsPrev();
+  showHint();
+  setTimeout(() => { _fsWheelThrottle = false; }, 600);
+}, { passive: false });
 fullscreenOverlay.addEventListener('click', e => {
   if (e.target === fullscreenOverlay || e.target === fsSlideFrame) {
     fsNext();
