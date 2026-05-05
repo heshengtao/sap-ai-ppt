@@ -1,0 +1,2260 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>AI PPT Generator</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ================================================================
+   Apple-Inspired Design System — AI PPT Generator v2
+   ================================================================ */
+
+/* ---- CSS Variables ---- */
+:root {
+  --bg: #ffffff;
+  --bg-elevated: #f5f5f7;
+  --bg-inset: #e8e8ed;
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #aeaeb2;
+  --accent: #007AFF;
+  --accent-hover: #0066d6;
+  --accent-subtle: rgba(0,122,255,0.08);
+  --accent-subtle-hover: rgba(0,122,255,0.14);
+  --border: rgba(0,0,0,0.06);
+  --border-strong: rgba(0,0,0,0.10);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 8px 30px rgba(0,0,0,0.06);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.10);
+  --preview-bg: #f0f0f3;
+  --slide-bg: #ffffff;
+  --code-bg: #1c1c1e;
+  --code-text: #e4e4e7;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --transition-fast: 0.18s cubic-bezier(0.25, 0.1, 0.25, 1);
+  --transition-smooth: 0.30s cubic-bezier(0.25, 0.1, 0.25, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  --toolbar-height: 44px;
+  --header-height: 48px;
+  --status-height: 28px;
+  --glass-bg: rgba(255,255,255,0.72);
+  --glass-border: rgba(0,0,0,0.08);
+}
+
+body.dark {
+  --bg: #1c1c1e;
+  --bg-elevated: #2c2c2e;
+  --bg-inset: #3a3a3c;
+  --text: #f5f5f7;
+  --text-secondary: #98989d;
+  --text-tertiary: #636366;
+  --accent: #0A84FF;
+  --accent-hover: #409cff;
+  --accent-subtle: rgba(10,132,255,0.12);
+  --accent-subtle-hover: rgba(10,132,255,0.20);
+  --border: rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.12);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.20);
+  --shadow-md: 0 8px 30px rgba(0,0,0,0.25);
+  --shadow-lg: 0 20px 60px rgba(0,0,0,0.40);
+  --preview-bg: #0d0d0f;
+  --slide-bg: #1c1c1e;
+  --code-bg: #111113;
+  --code-text: #e4e4e7;
+  --glass-bg: rgba(44,44,46,0.72);
+  --glass-border: rgba(255,255,255,0.08);
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  background: var(--bg);
+  color: var(--text);
+  transition: background var(--transition-smooth), color var(--transition-smooth);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+}
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+#app {
+  display: flex; flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* ---- Header ---- */
+header {
+  height: var(--header-height); min-height: var(--header-height);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 20px;
+  background: var(--glass-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  z-index: 30;
+  transition: background var(--transition-smooth);
+}
+header .logo {
+  font-weight: 600; font-size: 15px; letter-spacing: -0.01em;
+  display: flex; align-items: center; gap: 10px;
+  color: var(--text);
+}
+header .logo i {
+  color: var(--accent); font-size: 17px;
+  filter: drop-shadow(0 2px 4px rgba(0,122,255,0.2));
+}
+.header-actions {
+  display: flex; gap: 4px; align-items: center;
+}
+.header-actions button {
+  width: 30px; height: 30px; border-radius: var(--radius-full);
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+}
+.header-actions button:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+.header-actions button.lang-btn {
+  width: auto; padding: 0 10px; border-radius: var(--radius-full);
+  font-size: 11px; font-weight: 600; letter-spacing: 0.02em;
+}
+
+/* ---- Main Content ---- */
+#main {
+  flex: 1; display: flex; overflow: hidden;
+  position: relative;
+}
+
+/* ---- Chat Panel ---- */
+#chatPanel {
+  display: flex; flex-direction: column;
+  min-width: 260px;
+  background: var(--bg);
+  transition: width var(--transition-smooth), opacity var(--transition-smooth), transform var(--transition-smooth);
+  position: relative;
+  z-index: 10;
+}
+
+/* ---- Resize Handle ---- */
+#splitHandle {
+  width: 6px; cursor: col-resize;
+  background: transparent;
+  position: relative; z-index: 15;
+  transition: background var(--transition-fast);
+  flex-shrink: 0;
+}
+#splitHandle::after {
+  content: '';
+  position: absolute; inset: 20% 0;
+  width: 1px; left: 50%; transform: translateX(-50%);
+  background: var(--border);
+  border-radius: 1px;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+#splitHandle:hover::after,
+#splitHandle.active::after {
+  background: var(--accent);
+  transform: translateX(-50%) scaleY(1.4);
+}
+
+/* ---- Preview Panel ---- */
+#previewPanel {
+  flex: 1; display: flex; flex-direction: column;
+  background: var(--preview-bg);
+  min-width: 280px;
+  transition: background var(--transition-smooth);
+}
+
+/* ================================================================
+   CHAT MESSAGES
+   ================================================================ */
+#messages {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  scroll-behavior: smooth;
+  padding: 14px 14px 4px;
+  overscroll-behavior: contain;
+}
+#messages::-webkit-scrollbar { width: 3px; }
+#messages::-webkit-scrollbar-track { background: transparent; }
+#messages::-webkit-scrollbar-thumb {
+  background: var(--border-strong); border-radius: 3px;
+}
+#messages::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+.msg {
+  display: flex; padding: 5px 0;
+}
+.msg.new-msg {
+  animation: msgIn 0.25s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+@keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.msg.user { justify-content: flex-end; }
+.msg.assistant { justify-content: flex-start; }
+
+.msg-inner {
+  display: flex; gap: 8px; align-items: flex-start;
+  max-width: 100%;
+  min-width: 0;
+}
+.msg.user .msg-inner { flex-direction: row-reverse; }
+
+.msg .icon {
+  width: 28px; height: 28px; border-radius: var(--radius-full);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; flex-shrink: 0;
+}
+.msg.user .icon {
+  background: var(--bg-inset); color: var(--text-secondary);
+}
+.msg.assistant .icon {
+  background: var(--accent); color: #fff;
+}
+
+.msg .bubble {
+  padding: 9px 14px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  line-height: 1.55;
+  font-size: 13px;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+}
+.msg.user .bubble {
+  background: var(--accent); color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.msg.assistant .bubble {
+  background: var(--bg-elevated);
+  border-bottom-left-radius: 4px;
+}
+
+.msg .bubble p { margin: 0 0 6px; }
+.msg .bubble p:last-child { margin-bottom: 0; }
+.msg .bubble h1, .msg .bubble h2, .msg .bubble h3 {
+  font-weight: 600; margin: 10px 0 6px; line-height: 1.3;
+}
+.msg .bubble h1:first-child, .msg .bubble h2:first-child, .msg .bubble h3:first-child { margin-top: 0; }
+.msg .bubble h1 { font-size: 1.3em; }
+.msg .bubble h2 { font-size: 1.15em; }
+.msg .bubble h3 { font-size: 1.05em; }
+.msg .bubble ul, .msg .bubble ol {
+  margin: 4px 0 6px;
+  padding-left: 20px;
+}
+.msg .bubble li { margin-bottom: 2px; }
+.msg .bubble code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--bg-inset);
+  padding: 1px 5px;
+  border-radius: 4px;
+  word-break: break-all;
+}
+.msg.user .bubble code {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+}
+.msg .bubble pre {
+  margin: 6px 0;
+  padding: 10px 14px;
+  background: var(--code-bg);
+  color: var(--code-text);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.6;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-width: 100%;
+}
+.msg.user .bubble pre {
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+}
+.msg .bubble pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+}
+.msg .bubble strong { font-weight: 600; }
+.msg .bubble em { font-style: italic; }
+.msg .bubble a {
+  color: var(--accent); text-decoration: none;
+  border-bottom: 1px solid var(--accent-subtle);
+  transition: border-color var(--transition-fast);
+}
+.msg .bubble a:hover { border-bottom-color: var(--accent); }
+.msg.user .bubble a { color: #fff; border-bottom-color: rgba(255,255,255,0.4); }
+.msg.user .bubble a:hover { border-bottom-color: #fff; }
+.msg .bubble blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 10px; margin: 6px 0;
+  color: var(--text-secondary);
+}
+.msg .bubble hr {
+  border: none; border-top: 1px solid var(--border);
+  margin: 8px 0;
+}
+.msg .bubble table {
+  border-collapse: collapse; width: 100%;
+  margin: 6px 0; font-size: 12px;
+}
+.msg .bubble th, .msg .bubble td {
+  border: 1px solid var(--border);
+  padding: 5px 8px; text-align: left;
+}
+.msg .bubble th { background: var(--bg-inset); font-weight: 600; }
+
+.msg.system {
+  justify-content: center;
+  font-size: 12px; color: var(--text-tertiary);
+  font-style: italic;
+}
+
+#empty {
+  height: 100%; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  color: var(--text-tertiary); gap: 10px; font-size: 13px;
+  text-align: center; padding: 20px;
+}
+#empty i { font-size: 36px; opacity: 0.5; }
+
+/* ================================================================
+   INPUT BAR
+   ================================================================ */
+#inputBar {
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  padding: 10px 14px;
+  transition: background var(--transition-smooth);
+}
+#inputWrap {
+  display: flex; gap: 8px; align-items: flex-end;
+}
+#userInput {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 9px 14px;
+  resize: none;
+  max-height: 100px; min-height: 38px;
+  line-height: 1.5;
+  font-size: 13px;
+  color: var(--text);
+  font-family: var(--font);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+#userInput::-webkit-scrollbar { display: none; }
+#userInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+#userInput::placeholder { color: var(--text-tertiary); }
+
+#sendBtn {
+  width: 38px; height: 38px; border-radius: var(--radius-full);
+  background: var(--accent); border: none; color: #fff;
+  cursor: pointer; font-size: 14px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+}
+#sendBtn:hover {
+  background: var(--accent-hover);
+  transform: scale(1.04);
+  box-shadow: 0 4px 14px rgba(0,122,255,0.35);
+}
+#sendBtn:active { transform: scale(0.96); }
+#sendBtn:disabled {
+  opacity: 0.35; cursor: not-allowed;
+  transform: none; box-shadow: none;
+}
+
+#clearBtn {
+  width: 38px; height: 38px; border-radius: var(--radius-full);
+  background: transparent; border: none;
+  color: var(--text-tertiary); cursor: pointer; font-size: 14px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+#clearBtn:hover {
+  color: var(--accent);
+  background: var(--accent-subtle);
+}
+#clearBtn:active { transform: scale(0.93); }
+
+/* ================================================================
+   PREVIEW TOOLBAR
+   ================================================================ */
+#previewToolbar {
+  height: var(--toolbar-height); min-height: var(--toolbar-height);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 12px; gap: 8px;
+  background: var(--glass-bg);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  transition: background var(--transition-smooth);
+}
+#previewToolbar .tabs {
+  display: flex; gap: 2px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-full);
+  padding: 3px;
+}
+#previewToolbar .tab-btn {
+  padding: 5px 14px;
+  border: none; background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer; font-size: 12px; font-weight: 500;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+#previewToolbar .tab-btn i { font-size: 11px; }
+#previewToolbar .tab-btn.active {
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 600;
+  box-shadow: var(--shadow-sm);
+}
+#previewToolbar .tab-btn:hover:not(.active) {
+  color: var(--text);
+  background: rgba(128,128,128,0.08);
+}
+#chatToggleBtn {
+  padding: 5px 14px;
+  border: none; background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer; font-size: 12px; font-weight: 500;
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  display: flex; align-items: center; gap: 5px;
+}
+#chatToggleBtn i { font-size: 11px; }
+#chatToggleBtn:hover {
+  color: var(--text);
+  background: var(--accent-subtle);
+}
+#chatToggleBtn.active {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.25);
+}
+
+#previewToolbar .slide-nav {
+  display: flex; align-items: center; gap: 6px;
+}
+#previewToolbar .slide-nav button {
+  width: 28px; height: 28px; border-radius: var(--radius-full);
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 11px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+#previewToolbar .slide-nav button:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+#previewToolbar .slide-nav button:disabled {
+  opacity: 0.25; cursor: not-allowed;
+}
+#previewToolbar .nav-sep {
+  color: var(--border);
+  margin: 0 2px;
+  font-size: 12px;
+  user-select: none;
+}
+#slideCounter {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 48px; text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#zoomDisplay {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px; text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+}
+#zoomDisplay:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Additional toolbar buttons (download, reset PPT) */
+.toolbar-actions {
+  display: flex; align-items: center; gap: 4px;
+}
+.toolbar-actions button {
+  width: 28px; height: 28px; border-radius: var(--radius-full);
+  background: transparent; border: none;
+  color: var(--text-secondary); cursor: pointer;
+  font-size: 12px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all var(--transition-fast);
+}
+.toolbar-actions button:hover {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+.toolbar-actions button:disabled {
+  opacity: 0.25; cursor: not-allowed;
+}
+
+/* ================================================================
+   PREVIEW CONTENT — uses transform:scale for zoom
+   ================================================================ */
+#previewContent {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 24px; overflow: hidden;
+  position: relative;
+}
+#slideViewport {
+  width: 1280px;
+  height: 720px;
+  background: var(--slide-bg);
+  box-shadow: var(--shadow-lg);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  transform-origin: center center;
+  flex-shrink: 0;
+  transition: background var(--transition-smooth), box-shadow var(--transition-smooth);
+}
+#slideViewport iframe {
+  width: 100%; height: 100%; border: none;
+}
+
+/* ---- Code View (FIXED SCROLLING) ---- */
+#codeView {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Per-slide selector bar inside code view */
+#codeSlideSelector {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 36px;
+}
+#codeSlideSelector span {
+  font-size: 11px; font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+#codeSlideSelector select {
+  flex: 1;
+  padding: 3px 8px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font);
+  cursor: pointer;
+  max-width: 300px;
+}
+#codeSlideSelector select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+#codeSlideSelector .code-info {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+
+/* The scrollable code area — FIXED: ensure full scrollability */
+#codeScrollArea {
+  flex: 1;
+  overflow: auto !important;
+  position: relative;
+}
+#codeBlock {
+  margin: 0;
+  padding: 18px 20px;
+  width: 100%;
+  min-height: 100%;
+  background: var(--code-bg);
+  color: var(--code-text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  tab-size: 2;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-radius: 0;
+  box-sizing: border-box;
+}
+#codeScrollArea::-webkit-scrollbar { width: 6px; height: 6px; }
+#codeScrollArea::-webkit-scrollbar-track { background: transparent; }
+#codeScrollArea::-webkit-scrollbar-thumb {
+  background: rgba(128,128,128,0.3); border-radius: 3px;
+}
+#codeScrollArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(128,128,128,0.5);
+}
+
+/* ---- Empty PPT State ---- */
+#pptEmpty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; color: var(--text-tertiary);
+  position: absolute; inset: 0; pointer-events: none;
+}
+#pptEmpty i { font-size: 44px; opacity: 0.25; }
+#pptEmpty span { font-size: 13px; }
+
+/* ================================================================
+   STATUS BAR
+   ================================================================ */
+#statusBar {
+  height: var(--status-height); min-height: var(--status-height);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; font-size: 11px;
+  color: var(--text-tertiary);
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  transition: background var(--transition-smooth);
+}
+#statusBar .status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  display: inline-block; margin-right: 5px;
+  transition: background var(--transition-fast);
+}
+#statusBar .status-dot.connected { background: #30d158; box-shadow: 0 0 6px rgba(48,209,88,0.4); }
+#statusBar .status-dot.disconnected { background: #ff453a; box-shadow: 0 0 6px rgba(255,69,58,0.3); }
+
+/* ================================================================
+   RESPONSIVE — Tablet
+   ================================================================ */
+@media (max-width: 1024px) {
+  #chatPanel { min-width: 220px; }
+  #previewPanel { min-width: 260px; }
+  #previewContent { padding: 16px; }
+  header { padding: 0 14px; }
+  header .logo { font-size: 14px; }
+  .msg .bubble { font-size: 12px; }
+  #previewToolbar { padding: 0 8px; }
+  #previewToolbar .tab-btn, #chatToggleBtn { padding: 4px 10px; font-size: 11px; }
+}
+
+/* ================================================================
+   RESPONSIVE — Phone
+   ================================================================ */
+@media (max-width: 767px) {
+  #main {
+    flex-direction: column;
+    position: relative;
+  }
+  #chatPanel {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 56%; max-height: 56%;
+    border-right: none;
+    border-top: 2px solid var(--accent);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.25);
+    z-index: 20;
+    min-width: 0;
+    transform: translateY(0);
+    transition: transform 0.35s cubic-bezier(0.32, 0.08, 0.24, 1);
+  }
+  #chatPanel.hidden {
+    transform: translateY(100%);
+    pointer-events: none;
+  }
+  #previewPanel { flex: 1; min-width: 0; }
+  #splitHandle { display: none; }
+  #chatToggleBtn { display: flex; }
+  header { height: 44px; min-height: 44px; padding: 0 12px; }
+  header .logo { font-size: 13px; gap: 6px; }
+  header .logo span { display: none; }
+  header .logo i { font-size: 16px; }
+  .header-actions button { width: 28px; height: 28px; font-size: 11px; }
+  #previewContent { padding: 8px; }
+  #previewToolbar .slide-nav button { width: 34px; height: 34px; font-size: 13px; }
+  #slideCounter { font-size: 10px; min-width: 40px; }
+  #inputBar { padding: 8px 10px; }
+  #inputWrap { gap: 6px; }
+  #userInput { min-height: 36px; font-size: 16px; }
+  #sendBtn, #clearBtn { width: 36px; height: 36px; }
+  #codeBlock { font-size: 10px; padding: 10px 14px; }
+  #statusBar { height: 24px; min-height: 24px; font-size: 10px; padding: 0 10px; }
+}
+
+@media (max-width: 380px) {
+  #previewToolbar { height: 38px; min-height: 38px; padding: 0 6px; gap: 4px; }
+  #previewToolbar .tab-btn, #chatToggleBtn { padding: 3px 8px; font-size: 10px; }
+  #previewToolbar .slide-nav button { width: 28px; height: 28px; font-size: 10px; }
+  #previewContent { padding: 4px; }
+  #chatPanel { height: 62%; max-height: 62%; }
+  header { height: 40px; min-height: 40px; }
+  #messages { padding: 10px 10px 4px; }
+  .msg .bubble { font-size: 12px; padding: 7px 10px; }
+}
+
+/* ================================================================
+   COMPACT MODE
+   ================================================================ */
+body.compact { background: transparent !important; }
+html.compact { background: transparent !important; }
+body.compact header,
+body.compact #inputBar { -webkit-app-region: drag; }
+body.compact button,
+body.compact input,
+body.compact textarea,
+body.compact .compact-close-btn { -webkit-app-region: no-drag; }
+.compact-close-btn { display: none; }
+body.compact .compact-close-btn {
+  display: flex;
+  position: absolute; top: 6px; right: 6px;
+  width: 20px; height: 20px;
+  background: #ff453a; border: none; border-radius: 50%;
+  color: #fff; align-items: center; justify-content: center;
+  font-size: 10px; cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  z-index: 100; -webkit-app-region: no-drag;
+  box-shadow: 0 2px 8px rgba(255,69,58,0.3);
+}
+body.compact .compact-close-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 14px rgba(255,69,58,0.5);
+}
+
+/* ================================================================
+   FULLSCREEN PRESENTATION MODE
+   ================================================================ */
+#fullscreenOverlay {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 9999;
+  background: #000;
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  user-select: none; -webkit-user-select: none;
+}
+#fullscreenOverlay.active {
+  display: flex;
+}
+#fullscreenOverlay iframe {
+  width: 100vw;
+  height: 100vh;
+  border: none;
+  pointer-events: none;
+}
+#fullscreenOverlay .fs-counter {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.45);
+  font-size: 13px; font-weight: 500;
+  font-family: var(--font);
+  letter-spacing: 0.03em;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+#fullscreenOverlay .fs-counter.hidden {
+  opacity: 0;
+}
+#fullscreenOverlay .fs-exit {
+  position: absolute; top: 16px; right: 16px;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.12);
+  border: none; color: rgba(255,255,255,0.7);
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  z-index: 10;
+}
+#fullscreenOverlay .fs-exit:hover {
+  background: rgba(255,255,255,0.22);
+  color: #fff;
+}
+#fullscreenOverlay .fs-hint {
+  position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
+  color: rgba(255,255,255,0.3);
+  font-size: 12px;
+  pointer-events: none;
+  transition: opacity 0.5s;
+}
+#fullscreenOverlay .fs-hint.fade {
+  opacity: 0;
+}
+</style>
+</head>
+<body>
+
+  <button class="compact-close-btn" onclick="closeWindow()" title="关闭窗口">
+    <i class="fa-solid fa-xmark"></i>
+  </button>
+
+  <!-- Fullscreen Presentation Overlay -->
+  <div id="fullscreenOverlay">
+    <button class="fs-exit" onclick="exitFullscreen()" title="Exit fullscreen (Esc)"><i class="fa-solid fa-xmark"></i></button>
+    <iframe id="fsSlideFrame" sandbox="allow-same-origin"></iframe>
+    <span class="fs-counter" id="fsCounter">1 / 5</span>
+    <span class="fs-hint" id="fsHint">Click to advance · Esc to exit</span>
+  </div>
+
+  <div id="app">
+    <header>
+      <div class="logo">
+        <i class="fa-solid fa-file-powerpoint"></i>
+        <span id="header-title">AI PPT Generator</span>
+      </div>
+      <div class="header-actions">
+        <button class="lang-btn" id="langBtn" onclick="toggleLanguage()">EN</button>
+        <button onclick="toggleDarkMode()" title="Toggle theme" id="darkModeBtn"><i class="fa-solid fa-moon" id="darkIcon"></i></button>
+      </div>
+    </header>
+
+    <div id="main">
+      <!-- Chat Panel -->
+      <div id="chatPanel">
+        <div id="messages">
+          <div id="empty">
+            <i class="fa-regular fa-comments"></i>
+            <span id="empty-text">Describe your PPT, AI will generate it</span>
+          </div>
+        </div>
+        <div id="inputBar">
+          <div id="inputWrap">
+            <button id="clearBtn" title="Clear messages"><i class="fa-solid fa-trash"></i></button>
+            <textarea id="userInput" placeholder="Describe the PPT you want..." rows="1"></textarea>
+            <button id="sendBtn" title="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Split Handle -->
+      <div id="splitHandle"></div>
+
+      <!-- Preview Panel -->
+      <div id="previewPanel">
+        <div id="previewToolbar">
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="preview" id="tabPreview">🎬 <span id="tabPreviewLabel">Preview</span></button>
+            <button class="tab-btn" data-tab="code" id="tabCode"><i class="fa-solid fa-code"></i> <span id="tabCodeLabel">Code</span></button>
+          </div>
+          <button id="chatToggleBtn" onclick="toggleChatPanel()" title="Toggle chat panel">
+            <i class="fa-solid fa-table-columns"></i>
+          </button>
+          <div class="slide-nav" id="slideNav">
+            <button id="btnZoomOut" onclick="zoomOut()" title="Zoom out"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+            <span id="zoomDisplay" onclick="resetZoom()" title="Click to reset zoom">100%</span>
+            <button id="btnZoomIn" onclick="zoomIn()" title="Zoom in"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+            <span class="nav-sep">|</span>
+            <button id="btnPrev" onclick="prevSlide()" title="Previous slide"><i class="fa-solid fa-chevron-left"></i></button>
+            <span id="slideCounter">0 / 0</span>
+            <button id="btnNext" onclick="nextSlide()" title="Next slide"><i class="fa-solid fa-chevron-right"></i></button>
+            <span class="nav-sep">|</span>
+            <div class="toolbar-actions">
+              <button id="btnFullscreen" onclick="enterFullscreen()" title="Fullscreen presentation" disabled><i class="fa-solid fa-play"></i></button>
+              <button id="btnDownload" onclick="downloadSource()" title="Download source" disabled><i class="fa-solid fa-download"></i></button>
+              <button id="btnResetPPT" onclick="resetPPT()" title="Reset PPT" disabled><i class="fa-solid fa-rotate-left"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div id="previewContent">
+          <div id="slideViewport">
+            <div id="pptEmpty">
+              <i class="fa-solid fa-file-powerpoint"></i>
+              <span id="pptEmptyText">Your PPT will appear here</span>
+            </div>
+            <iframe id="slideFrame" sandbox="allow-same-origin" style="display:none;"></iframe>
+          </div>
+        </div>
+
+        <div id="codeView">
+          <div id="codeSlideSelector">
+            <span id="codeSlideLabel">Slide:</span>
+            <select id="codeSlideSelect" onchange="onCodeSlideChange()">
+              <option value="all">All Slides</option>
+            </select>
+            <span class="code-info" id="codeInfo"></span>
+          </div>
+          <div id="codeScrollArea">
+            <pre id="codeBlock"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="statusBar">
+      <span><span class="status-dot disconnected" id="statusDot"></span><span id="statusText">Disconnected</span></span>
+      <span id="pptInfo"></span>
+    </div>
+  </div>
+
+<script>
+/* ================================================================
+   SAP AI PPT Generator — Static Extension v3
+   - Per-slide MCP tools (add_slides, update_slide, generate_ppt, get_slide_source)
+   - Fullscreen presentation mode (click/arrow keys to navigate, Esc to exit)
+   - localStorage caching with restore
+   - Per-slide code viewing with scroll fix
+   - Download source + Reset PPT
+   ================================================================ */
+
+const $ = s => document.querySelector(s);
+const msgs = $('#messages');
+const input = $('#userInput');
+const btn = $('#sendBtn');
+const clearBtn = $('#clearBtn');
+const slideFrame = $('#slideFrame');
+const pptEmpty = $('#pptEmpty');
+const codeBlock = $('#codeBlock');
+const codeView = $('#codeView');
+const codeScrollArea = $('#codeScrollArea');
+const codeSlideSelect = $('#codeSlideSelect');
+const codeInfo = $('#codeInfo');
+const previewContent = $('#previewContent');
+const slideCounter = $('#slideCounter');
+const slideNav = $('#slideNav');
+const chatPanel = $('#chatPanel');
+const chatToggleBtn = $('#chatToggleBtn');
+const zoomDisplay = $('#zoomDisplay');
+const slideViewport = $('#slideViewport');
+const btnDownload = $('#btnDownload');
+const btnResetPPT = $('#btnResetPPT');
+const btnFullscreen = $('#btnFullscreen');
+const fullscreenOverlay = $('#fullscreenOverlay');
+const fsSlideFrame = $('#fsSlideFrame');
+const fsCounter = $('#fsCounter');
+const fsHint = $('#fsHint');
+
+let ws;
+let MY_EXT_ID = '';
+let slidesHTML = [];
+let currentSlide = 0;
+let fullPPTContent = '';
+let currentTab = 'preview';
+let isMobileLayout = false;
+let chatVisible = true;
+
+/* ---- Zoom state ---- */
+let _zoomLevel = 1.0;
+let _baseScale = 1.0;
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 4.0;
+const ZOOM_STEP = 0.1;
+const VIEWPORT_W = 1280;
+const VIEWPORT_H = 720;
+
+/* ---- Flicker prevention ---- */
+let _lastMessagesHash = '';
+let _rafPending = false;
+let _pendingList = null;
+let _prevMessageCount = 0;
+
+/* ---- localStorage cache key ---- */
+const CACHE_KEY = 'aippt_slides_cache';
+
+/* ---- i18n ---- */
+const i18n = {
+  zh: {
+    title: 'AI PPT 生成器',
+    empty: '描述你想要的PPT，AI将为你生成',
+    placeholder: '描述你想创建的PPT…',
+    darkMode: '切换深色模式',
+    langSwitch: '切换到英文',
+    clear: '清空消息',
+    send: '发送消息',
+    preview: '预览',
+    code: '源码',
+    pptEmpty: '你的PPT将在这里展示',
+    statusConnected: '已连接',
+    statusDisconnected: '未连接',
+    slides: '页',
+    noSlides: '暂无幻灯片',
+    tabPreview: '预览',
+    tabCode: '源码',
+    chatToggle: '切换对话面板',
+    chatShow: '展开对话',
+    chatHide: '折叠对话',
+    prevSlide: '上一页',
+    nextSlide: '下一页',
+    zoomReset: '点击重置缩放',
+    zoomIn: '放大',
+    zoomOut: '缩小',
+    closeWindow: '关闭窗口',
+    download: '下载源码',
+    resetPPT: '重置PPT',
+    slideLabel: '幻灯片:',
+    allSlides: '全部幻灯片',
+    slideN: '第{0}页',
+    bytes: '字节',
+    chars: '字符',
+    resetConfirm: '确定要清空所有PPT内容吗？此操作不可撤销。',
+    cacheRestored: '已从缓存恢复 {0} 页幻灯片',
+    downloadFilename: 'ai-ppt-slides.html',
+    fullscreen: '全屏放映',
+    fsHint: '点击翻页 · 按Esc退出',
+    fsExit: '退出全屏 (Esc)'
+  },
+  en: {
+    title: 'AI PPT Generator',
+    empty: 'Describe your PPT, AI will generate it',
+    placeholder: 'Describe the PPT you want...',
+    darkMode: 'Toggle dark mode',
+    langSwitch: 'Switch to Chinese',
+    clear: 'Clear messages',
+    send: 'Send message',
+    preview: 'Preview',
+    code: 'Code',
+    pptEmpty: 'Your PPT will appear here',
+    statusConnected: 'Connected',
+    statusDisconnected: 'Disconnected',
+    slides: 'slides',
+    noSlides: 'No slides',
+    tabPreview: 'Preview',
+    tabCode: 'Code',
+    chatToggle: 'Toggle chat panel',
+    chatShow: 'Show chat',
+    chatHide: 'Hide chat',
+    prevSlide: 'Previous slide',
+    nextSlide: 'Next slide',
+    zoomReset: 'Click to reset zoom',
+    zoomIn: 'Zoom in',
+    zoomOut: 'Zoom out',
+    closeWindow: 'Close window',
+    download: 'Download source',
+    resetPPT: 'Reset PPT',
+    slideLabel: 'Slide:',
+    allSlides: 'All Slides',
+    slideN: 'Slide {0}',
+    bytes: 'bytes',
+    chars: 'chars',
+    resetConfirm: 'Are you sure you want to clear all PPT content? This cannot be undone.',
+    cacheRestored: 'Restored {0} slides from cache',
+    downloadFilename: 'ai-ppt-slides.html',
+    fullscreen: 'Fullscreen presentation',
+    fsHint: 'Click to advance · Esc to exit',
+    fsExit: 'Exit fullscreen (Esc)'
+  }
+};
+let lang = localStorage.getItem('aippt_lang') || 'zh';
+function t(k, ...args) {
+  let s = i18n[lang]?.[k] || i18n.zh[k] || k;
+  args.forEach((v, i) => { s = s.replace(`{${i}}`, v); });
+  return s;
+}
+function toggleLanguage() {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('aippt_lang', lang);
+  updateAllTexts();
+  updateCodeSlideSelector();
+  if (ws && ws.readyState === WebSocket.OPEN) registerMcpTools();
+}
+function safeText(id, text) { const el = $(id); if (el) el.textContent = text; }
+function safeTitle(id, text) { const el = $(id); if (el) el.title = text; }
+function safePlaceholder(id, text) { const el = $(id); if (el) el.placeholder = text; }
+function updateAllTexts() {
+  safeText('#header-title', t('title'));
+  safeText('#empty-text', t('empty'));
+  safePlaceholder('#userInput', t('placeholder'));
+  const langBtn = $('#langBtn');
+  if (langBtn) { langBtn.textContent = lang === 'zh' ? 'EN' : '中'; langBtn.title = t('langSwitch'); }
+  safeTitle('#darkModeBtn', t('darkMode'));
+  safeTitle('#clearBtn', t('clear'));
+  safeTitle('#sendBtn', t('send'));
+  safeText('#pptEmptyText', t('pptEmpty'));
+  safeText('#tabPreviewLabel', t('tabPreview'));
+  safeText('#tabCodeLabel', t('tabCode'));
+  safeText('#codeSlideLabel', t('slideLabel'));
+  safeTitle('#chatToggleBtn', t('chatToggle'));
+  safeTitle('#btnPrev', t('prevSlide'));
+  safeTitle('#btnNext', t('nextSlide'));
+  safeTitle('#zoomDisplay', t('zoomReset'));
+  safeTitle('#btnZoomIn', t('zoomIn'));
+  safeTitle('#btnZoomOut', t('zoomOut'));
+  safeTitle('#btnDownload', t('download'));
+  safeTitle('#btnResetPPT', t('resetPPT'));
+  safeTitle('#btnFullscreen', t('fullscreen'));
+  document.querySelector('.compact-close-btn')?.setAttribute('title', t('closeWindow'));
+  safeText('#fsHint', t('fsHint'));
+  const fsExitBtn = document.querySelector('.fs-exit');
+  if (fsExitBtn) fsExitBtn.title = t('fsExit');
+  updateChatToggleLabel();
+  updateSlideCounter();
+  updateStatusBar();
+  updateToolbarButtons();
+}
+
+/* ---- Theme ---- */
+(function initTheme() {
+  const saved = localStorage.getItem('aippt_dark');
+  if (saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme:dark)').matches)) {
+    document.body.classList.add('dark');
+  }
+  updateDarkIcon();
+})();
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('aippt_dark', isDark ? 'dark' : 'light');
+  updateDarkIcon();
+  if (slidesHTML.length > 0 && currentTab === 'preview') renderSlideInIframe();
+  fitSlideViewport();
+}
+function updateDarkIcon() {
+  const icon = $('#darkIcon');
+  if (icon) icon.className = document.body.classList.contains('dark') ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+}
+
+/* ---- Extension ID ---- */
+function getExtId() {
+  try {
+    const match = window.location.pathname.match(/\/extensions\/([^\/]+)/);
+    MY_EXT_ID = match ? match[1] : 'sap-ai-ppt';
+  } catch(e) { MY_EXT_ID = 'sap-ai-ppt'; }
+  return MY_EXT_ID;
+}
+
+/* ---- PPT Logic ---- */
+function parseSlides(htmlContent) {
+  const slides = [];
+  const regex = /<section\s[^>]*class\s*=\s*["'][^"']*slide[^"']*["'][^>]*>([\s\S]*?)<\/section>/gi;
+  let match;
+  while ((match = regex.exec(htmlContent)) !== null) {
+    slides.push(match[0]);
+  }
+  if (slides.length === 0 && htmlContent.trim()) {
+    slides.push(`<section class="slide">${htmlContent}</section>`);
+  }
+  return slides;
+}
+
+function buildFullDocument() {
+  const isDark = document.body.classList.contains('dark');
+  const bg = isDark ? '#1c1c1e' : '#ffffff';
+  const textColor = isDark ? '#f5f5f7' : '#1d1d1f';
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:${bg};color:${textColor};}
+.slide-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.slide{width:100%;height:100%;padding:5% 8%;overflow:hidden;display:flex;flex-direction:column;justify-content:center;}
+</style></head>
+<body><div class="slide-container">SLIDE_PLACEHOLDER</div></body>
+</html>`;
+}
+
+function updateSlideDisplay() {
+  if (slidesHTML.length === 0) {
+    slideFrame.style.display = 'none';
+    pptEmpty.style.display = 'flex';
+    currentSlide = 0;
+    updateSlideCounter();
+    updateToolbarButtons();
+    return;
+  }
+  pptEmpty.style.display = 'none';
+  slideFrame.style.display = 'block';
+  if (currentSlide >= slidesHTML.length) currentSlide = 0;
+  if (currentSlide < 0) currentSlide = slidesHTML.length - 1;
+  renderSlideInIframe();
+  updateSlideCounter();
+  updateToolbarButtons();
+  fitSlideViewport();
+}
+
+function renderSlideInIframe() {
+  const doc = buildFullDocument();
+  const slideContent = slidesHTML[currentSlide] || '';
+  const html = doc.replace('SLIDE_PLACEHOLDER', slideContent);
+  slideFrame.srcdoc = html;
+}
+
+function rebuildFullContent() {
+  fullPPTContent = slidesHTML.join('\n');
+}
+
+function updateSlideCounter() {
+  if (slidesHTML.length === 0) {
+    slideCounter.textContent = t('noSlides');
+    $('#btnPrev').disabled = true;
+    $('#btnNext').disabled = true;
+  } else {
+    slideCounter.textContent = `${currentSlide + 1} / ${slidesHTML.length}`;
+    $('#btnPrev').disabled = currentSlide === 0;
+    $('#btnNext').disabled = currentSlide >= slidesHTML.length - 1;
+  }
+}
+
+function updateToolbarButtons() {
+  const hasSlides = slidesHTML.length > 0;
+  btnDownload.disabled = !hasSlides;
+  btnResetPPT.disabled = !hasSlides;
+  btnFullscreen.disabled = !hasSlides;
+}
+
+function prevSlide() {
+  if (currentSlide > 0) { currentSlide--; updateSlideDisplay(); }
+}
+function nextSlide() {
+  if (currentSlide < slidesHTML.length - 1) { currentSlide++; updateSlideDisplay(); }
+}
+
+/* ================================================================
+   ZOOM & VIEWPORT SCALING
+   ================================================================ */
+function fitSlideViewport() {
+  const vp = slideViewport;
+  if (!vp) return;
+  const parent = vp.parentElement;
+  if (!parent) return;
+  const pw = parent.clientWidth;
+  const ph = parent.clientHeight;
+  if (!pw || !ph) return;
+  const ratio = VIEWPORT_W / VIEWPORT_H;
+  const parentRatio = pw / ph;
+  if (parentRatio > ratio) {
+    _baseScale = ph / VIEWPORT_H;
+  } else {
+    _baseScale = pw / VIEWPORT_W;
+  }
+  _baseScale = Math.min(_baseScale, (pw - 48) / VIEWPORT_W, (ph - 48) / VIEWPORT_H);
+  applyZoom();
+}
+
+function applyZoom() {
+  const scale = _baseScale * _zoomLevel;
+  slideViewport.style.transform = `scale(${scale})`;
+  const pct = Math.round(_zoomLevel * 100);
+  zoomDisplay.textContent = pct + '%';
+}
+
+function setZoom(level) {
+  _zoomLevel = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, level));
+  applyZoom();
+}
+function resetZoom() { _zoomLevel = 1.0; applyZoom(); }
+function zoomIn() { setZoom(_zoomLevel + ZOOM_STEP); }
+function zoomOut() { setZoom(_zoomLevel - ZOOM_STEP); }
+
+previewContent.addEventListener('wheel', e => {
+  if (e.ctrlKey || e.metaKey) {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP;
+    setZoom(_zoomLevel + delta);
+  }
+}, { passive: false });
+
+previewContent.addEventListener('dblclick', e => {
+  if (e.target === previewContent || e.target === slideViewport) {
+    resetZoom();
+  }
+});
+
+/* ================================================================
+   PPT CONTENT MANAGEMENT — with localStorage cache
+   ================================================================ */
+
+function saveCache() {
+  try {
+    const data = {
+      slides: slidesHTML,
+      ts: Date.now()
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+  } catch(e) {
+    // localStorage may be full
+    console.warn('[AI-PPT] Failed to cache slides:', e.message);
+  }
+}
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (data.slides && Array.isArray(data.slides) && data.slides.length > 0) {
+      slidesHTML = data.slides;
+      rebuildFullContent();
+      currentSlide = 0;
+      updateSlideDisplay();
+      updateCodeSlideSelector();
+      updateCodeViewContent();
+      const info = `${slidesHTML.length} ${t('slides')}`;
+      $('#pptInfo').textContent = info;
+      return true;
+    }
+  } catch(e) {
+    console.warn('[AI-PPT] Failed to load cache:', e.message);
+  }
+  return false;
+}
+
+function clearCache() {
+  try { localStorage.removeItem(CACHE_KEY); } catch(e) {}
+}
+
+function setPPTContent(htmlContent) {
+  slidesHTML = parseSlides(htmlContent);
+  rebuildFullContent();
+  currentSlide = 0;
+  updateSlideDisplay();
+  updateCodeSlideSelector();
+  updateCodeViewContent();
+  const info = slidesHTML.length > 0 ? `${slidesHTML.length} ${t('slides')}` : '';
+  $('#pptInfo').textContent = info;
+  saveCache();
+}
+
+/**
+ * Add one or more slides to the end. `html_content` can contain
+ * one or multiple <section class="slide"> elements.
+ */
+function addSlidesContent(htmlContent) {
+  const newSlides = parseSlides(htmlContent);
+  if (newSlides.length === 0) return 0;
+  slidesHTML = slidesHTML.concat(newSlides);
+  rebuildFullContent();
+  if (slidesHTML.length > 0 && currentSlide >= slidesHTML.length) {
+    currentSlide = slidesHTML.length - 1;
+  }
+  updateSlideDisplay();
+  updateCodeSlideSelector();
+  updateCodeViewContent();
+  const info = `${slidesHTML.length} ${t('slides')}`;
+  $('#pptInfo').textContent = info;
+  saveCache();
+  return newSlides.length;
+}
+
+/**
+ * Update a specific slide by index (0-based).
+ */
+function updateSlideContent(index, htmlContent) {
+  if (index < 0 || index >= slidesHTML.length) return false;
+  // Parse the new content — if it contains a <section class="slide">, extract inner content
+  const parsed = parseSlides(htmlContent);
+  if (parsed.length > 0) {
+    slidesHTML[index] = parsed[0];
+  } else {
+    slidesHTML[index] = `<section class="slide">${htmlContent}</section>`;
+  }
+  rebuildFullContent();
+  updateSlideDisplay();
+  updateCodeSlideSelector();
+  updateCodeViewContent();
+  $('#pptInfo').textContent = `${slidesHTML.length} ${t('slides')}`;
+  saveCache();
+  return true;
+}
+
+function resetPPT() {
+  if (!confirm(t('resetConfirm'))) return;
+  slidesHTML = [];
+  fullPPTContent = '';
+  currentSlide = 0;
+  clearCache();
+  updateSlideDisplay();
+  updateCodeSlideSelector();
+  $('#codeBlock').textContent = '';
+  $('#codeInfo').textContent = '';
+  $('#pptInfo').textContent = '';
+  updateToolbarButtons();
+  // Switch to preview tab
+  if (currentTab === 'code') switchTab('preview');
+}
+
+function downloadSource() {
+  if (slidesHTML.length === 0) return;
+  const content = slidesHTML.join('\n');
+  const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = t('downloadFilename');
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ================================================================
+   FULLSCREEN PRESENTATION MODE
+   ================================================================ */
+let _fsIndex = 0;
+let _fsHintTimer = null;
+let _fsTimer = null;
+
+function buildFullscreenDoc(slideIdx) {
+  const isDark = document.body.classList.contains('dark');
+  const bg = isDark ? '#1c1c1e' : '#ffffff';
+  const textColor = isDark ? '#f5f5f7' : '#1d1d1f';
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100vw;height:100vh;overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:${bg};color:${textColor};}
+.slide-container{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.slide{width:100%;height:100%;padding:5% 8%;overflow:hidden;display:flex;flex-direction:column;justify-content:center;}
+</style></head>
+<body><div class="slide-container">SLIDE_PLACEHOLDER</div></body>
+</html>`;
+}
+
+function enterFullscreen() {
+  if (slidesHTML.length === 0) return;
+  _fsIndex = currentSlide;
+  fullscreenOverlay.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  renderFsSlide();
+  showHint();
+  // Request browser fullscreen if available
+  try {
+    const el = fullscreenOverlay;
+    if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  } catch(e) {}
+}
+
+function exitFullscreen() {
+  fullscreenOverlay.classList.remove('active');
+  document.body.style.overflow = '';
+  if (_fsHintTimer) { clearTimeout(_fsHintTimer); _fsHintTimer = null; }
+  // Exit browser fullscreen
+  try {
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    else if (document.webkitFullscreenElement) document.webkitExitFullscreen();
+    else if (document.msFullscreenElement) document.msExitFullscreen();
+  } catch(e) {}
+  // Sync current slide back to preview
+  if (_fsIndex >= 0 && _fsIndex < slidesHTML.length) {
+    currentSlide = _fsIndex;
+    updateSlideDisplay();
+  }
+}
+
+function renderFsSlide() {
+  const doc = buildFullscreenDoc(_fsIndex);
+  const slideContent = slidesHTML[_fsIndex] || '';
+  const html = doc.replace('SLIDE_PLACEHOLDER', slideContent);
+  fsSlideFrame.srcdoc = html;
+  fsCounter.textContent = `${_fsIndex + 1} / ${slidesHTML.length}`;
+}
+
+function fsNext() {
+  if (_fsIndex < slidesHTML.length - 1) {
+    _fsIndex++;
+    renderFsSlide();
+    hideFsCounterBriefly();
+  }
+}
+
+function fsPrev() {
+  if (_fsIndex > 0) {
+    _fsIndex--;
+    renderFsSlide();
+    hideFsCounterBriefly();
+  }
+}
+
+function hideFsCounterBriefly() {
+  fsCounter.classList.add('hidden');
+  if (_fsTimer) clearTimeout(_fsTimer);
+  _fsTimer = setTimeout(() => { fsCounter.classList.remove('hidden'); }, 1500);
+}
+
+function showHint() {
+  fsHint.classList.remove('fade');
+  if (_fsHintTimer) clearTimeout(_fsHintTimer);
+  _fsHintTimer = setTimeout(() => { fsHint.classList.add('fade'); }, 4000);
+}
+
+// Click on fullscreen overlay → advance slide
+fullscreenOverlay.addEventListener('click', e => {
+  if (e.target === fullscreenOverlay || e.target === fsSlideFrame) {
+    fsNext();
+    showHint();
+  }
+});
+
+// Keyboard in fullscreen
+document.addEventListener('keydown', e => {
+  if (!fullscreenOverlay.classList.contains('active')) return;
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    exitFullscreen();
+  } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    fsNext();
+    showHint();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    fsPrev();
+    showHint();
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    _fsIndex = 0;
+    renderFsSlide();
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    _fsIndex = slidesHTML.length - 1;
+    renderFsSlide();
+  }
+});
+
+// Touch/swipe in fullscreen
+let _fsTouchStartX = 0, _fsTouchStartY = 0;
+fullscreenOverlay.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    _fsTouchStartX = e.touches[0].clientX;
+    _fsTouchStartY = e.touches[0].clientY;
+  }
+}, { passive: true });
+fullscreenOverlay.addEventListener('touchend', e => {
+  if (!e.changedTouches.length) return;
+  const dx = e.changedTouches[0].clientX - _fsTouchStartX;
+  const dy = e.changedTouches[0].clientY - _fsTouchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+    if (dx > 0) fsPrev(); else fsNext();
+    showHint();
+  }
+});
+
+// Fullscreen change event (user pressed Esc via browser)
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && fullscreenOverlay.classList.contains('active')) {
+    exitFullscreen();
+  }
+});
+document.addEventListener('webkitfullscreenchange', () => {
+  if (!document.webkitFullscreenElement && fullscreenOverlay.classList.contains('active')) {
+    exitFullscreen();
+  }
+});
+
+/* ================================================================
+   CODE VIEW — per-slide selector + fixed scrolling
+   ================================================================ */
+function updateCodeSlideSelector() {
+  let html = `<option value="all">${t('allSlides')}</option>`;
+  for (let i = 0; i < slidesHTML.length; i++) {
+    html += `<option value="${i}">${t('slideN', i + 1)}</option>`;
+  }
+  codeSlideSelect.innerHTML = html;
+  codeSlideSelect.value = 'all';
+  updateCodeViewContent();
+}
+
+function onCodeSlideChange() {
+  updateCodeViewContent();
+}
+
+function updateCodeViewContent() {
+  const val = codeSlideSelect.value;
+  let content = '';
+  if (val === 'all') {
+    content = slidesHTML.join('\n');
+    if (!content && slidesHTML.length === 0) {
+      content = lang === 'zh' ? '<!-- 暂无PPT内容 -->' : '<!-- No PPT content yet -->';
+    }
+    codeInfo.textContent = slidesHTML.length > 0
+      ? `${slidesHTML.length} slides · ${content.length} ${t('chars')}`
+      : '';
+  } else {
+    const idx = parseInt(val);
+    if (idx >= 0 && idx < slidesHTML.length) {
+      content = slidesHTML[idx];
+      codeInfo.textContent = `Slide ${idx + 1} · ${content.length} ${t('chars')}`;
+    }
+  }
+  codeBlock.textContent = content;
+  // Reset scroll to top
+  if (codeScrollArea) codeScrollArea.scrollTop = 0;
+}
+
+/* ---- Tabs ---- */
+function switchTab(tab) {
+  currentTab = tab;
+  if (tab === 'preview') {
+    previewContent.style.display = 'flex';
+    codeView.style.display = 'none';
+    slideNav.style.display = 'flex';
+    $('#tabPreview').classList.add('active');
+    $('#tabCode').classList.remove('active');
+    updateSlideDisplay();
+    requestAnimationFrame(() => fitSlideViewport());
+  } else {
+    previewContent.style.display = 'none';
+    codeView.style.display = 'flex';
+    slideNav.style.display = 'flex';
+    $('#tabCode').classList.add('active');
+    $('#tabPreview').classList.remove('active');
+    updateCodeViewContent();
+  }
+}
+
+/* ---- Chat Panel Toggle ---- */
+function updateChatToggleLabel() {
+  if (chatVisible) {
+    chatToggleBtn.innerHTML = '<i class="fa-solid fa-table-columns"></i> ' + t('chatHide');
+    chatToggleBtn.classList.add('active');
+  } else {
+    chatToggleBtn.innerHTML = '<i class="fa-solid fa-table-columns"></i> ' + t('chatShow');
+    chatToggleBtn.classList.remove('active');
+  }
+}
+
+function toggleChatPanel() {
+  if (isMobileLayout) {
+    if (chatVisible) { hideMobileChat(); } else { showMobileChat(); }
+  } else {
+    if (chatVisible) { hideChatPanel(); } else { showChatPanel(); }
+  }
+}
+
+function showChatPanel() {
+  chatPanel.style.display = 'flex';
+  chatPanel.style.width = (chatPanel.dataset.lastWidth || '40%');
+  chatPanel.style.flex = 'none';
+  chatPanel.style.opacity = '1';
+  chatPanel.style.minWidth = '260px';
+  chatPanel.style.overflow = '';
+  $('#splitHandle').style.display = '';
+  chatVisible = true;
+  updateChatToggleLabel();
+  requestAnimationFrame(() => fitSlideViewport());
+}
+
+function hideChatPanel() {
+  chatPanel.dataset.lastWidth = chatPanel.style.width || '40%';
+  chatPanel.style.width = '0';
+  chatPanel.style.opacity = '0';
+  chatPanel.style.overflow = 'hidden';
+  chatPanel.style.minWidth = '0';
+  $('#splitHandle').style.display = 'none';
+  chatVisible = false;
+  updateChatToggleLabel();
+  setTimeout(() => {
+    if (!chatVisible) { chatPanel.style.display = 'none'; }
+  }, 300);
+  requestAnimationFrame(() => fitSlideViewport());
+}
+
+function showMobileChat() {
+  chatPanel.classList.remove('hidden');
+  chatPanel.style.display = 'flex';
+  chatVisible = true;
+  updateChatToggleLabel();
+  setTimeout(() => input.focus(), 350);
+}
+
+function hideMobileChat() {
+  chatPanel.classList.add('hidden');
+  chatVisible = false;
+  updateChatToggleLabel();
+}
+
+/* ---- WebSocket ---- */
+let _closing = false;
+
+function initWS() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  ws = new WebSocket(`${proto}//${location.host}/ws`);
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ type: 'get_messages' }));
+    registerMcpTools();
+    updateStatusBar();
+  };
+  ws.onclose = () => {
+    updateStatusBar();
+    if (!_closing) setTimeout(initWS, 5000);
+  };
+  ws.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.type === 'messages_update' || d.type === 'broadcast_messages') render(d.data.messages);
+      if (d.type === 'call_mcp_tool') handleMcpCall(d.data);
+      if (d.type === 'mcp_registered') console.log('[AI-PPT] MCP tools registered');
+    } catch {}
+  };
+}
+
+function updateStatusBar() {
+  const connected = ws && ws.readyState === WebSocket.OPEN;
+  $('#statusDot').className = 'status-dot ' + (connected ? 'connected' : 'disconnected');
+  $('#statusText').textContent = connected ? t('statusConnected') : t('statusDisconnected');
+}
+
+/* ================================================================
+   MCP TOOLS — 4 tools: generate_ppt, add_slides, update_slide, get_slide_source
+   ================================================================ */
+function registerMcpTools() {
+  getExtId();
+  ws.send(JSON.stringify({
+    type: 'register_node_extension_mcp',
+    data: {
+      ext_id: MY_EXT_ID,
+      tools: [
+        // Tool 1: Generate/replace entire PPT (backward compatible)
+        {
+          name: `${MY_EXT_ID}_generate_ppt`,
+          description: lang === 'zh'
+            ? '生成/替换整个PPT演示文稿。传入完整的HTML内容，每页幻灯片必须用 <section class="slide"> 包裹。支持内联CSS样式，16:9比例。请设计美观现代的幻灯片。此工具会替换整个演示文稿，如果只想添加新页面，请使用 add_slides 工具。'
+            : 'Generate/replace the entire PPT presentation. Pass complete HTML content with each slide wrapped in <section class="slide">. Supports inline CSS styles, 16:9 ratio. Design beautiful modern slides. This replaces the entire presentation. If you only want to add new slides, use add_slides instead.',
+          parameters: {
+            type: 'object',
+            properties: {
+              html_content: {
+                type: 'string',
+                description: lang === 'zh'
+                  ? '完整的PPT HTML代码。每页用 <section class="slide"> 包裹。使用内联样式。设计16:9比例的美观幻灯片。'
+                  : 'Complete PPT HTML code. Each slide wrapped in <section class="slide">. Use inline styles. Design for 16:9 ratio.'
+              },
+              theme: {
+                type: 'string',
+                description: lang === 'zh'
+                  ? 'PPT主题：dark(暗色)、light(亮色)、blue(蓝色)、green(绿色)、gradient(渐变)等'
+                  : 'PPT theme: dark, light, blue, green, gradient, etc.'
+              }
+            },
+            required: ['html_content']
+          }
+        },
+        // Tool 2: Add slides (single or multiple)
+        {
+          name: `${MY_EXT_ID}_add_slides`,
+          description: lang === 'zh'
+            ? '向现有PPT追加一页或多页幻灯片。传入的HTML可以包含一个或多个 <section class="slide"> 元素，它们会被追加到演示文稿末尾。支持单页追加，也支持一次追加多页。AI可以逐页调用此工具，也可以一次传入多页。这是创建PPT的推荐方式——一页一页地构建演示文稿，便于随时修改。'
+            : 'Append one or more slides to the existing PPT. The HTML can contain one or multiple <section class="slide"> elements, which will be appended to the end of the presentation. Supports both single-page and multi-page additions. AI can call this tool page by page or pass multiple pages at once. This is the recommended way to build a PPT — construct slides incrementally for easier editing.',
+          parameters: {
+            type: 'object',
+            properties: {
+              html_content: {
+                type: 'string',
+                description: lang === 'zh'
+                  ? '要追加的幻灯片HTML。可以是一页（一个 <section class="slide">），也可以是多页（多个 <section class="slide">）。使用内联CSS样式，16:9比例。'
+                  : 'Slide HTML to append. Can be one slide (single <section class="slide">) or multiple slides. Use inline CSS styles, 16:9 ratio.'
+              }
+            },
+            required: ['html_content']
+          }
+        },
+        // Tool 3: Update a specific slide
+        {
+          name: `${MY_EXT_ID}_update_slide`,
+          description: lang === 'zh'
+            ? '修改指定页面的PPT内容。传入页码（从1开始）和新的HTML内容。只修改这一页，其他页面保持不变。如果某页内容需要调整，使用此工具而不是重新生成整个PPT。'
+            : 'Update a specific slide\'s content. Pass the slide number (1-based) and the new HTML content. Only this slide is modified; other slides remain unchanged. Use this tool when a specific slide needs adjustment instead of regenerating the entire PPT.',
+          parameters: {
+            type: 'object',
+            properties: {
+              slide_index: {
+                type: 'integer',
+                description: lang === 'zh'
+                  ? '要修改的幻灯片页码，从1开始。例如：1表示第一页，2表示第二页。'
+                  : 'The slide number to update, 1-based. E.g., 1 for the first slide, 2 for the second.'
+              },
+              html_content: {
+                type: 'string',
+                description: lang === 'zh'
+                  ? '该页的新HTML内容。使用 <section class="slide"> 包裹。使用内联CSS样式，16:9比例。'
+                  : 'New HTML content for this slide. Wrapped in <section class="slide">. Use inline CSS styles, 16:9 ratio.'
+              }
+            },
+            required: ['slide_index', 'html_content']
+          }
+        },
+        // Tool 4: Get current slide source code
+        {
+          name: `${MY_EXT_ID}_get_slide_source`,
+          description: lang === 'zh'
+            ? '查看PPT的HTML源码。可以查看当前正在预览的那一页（slide_index设为0或不传），或查看指定页码的幻灯片源码（slide_index从1开始），或查看全部幻灯片源码（slide_index设为-1或"all"）。AI在修改PPT前应先用此工具查看当前状态，确保掌握最新内容。'
+            : 'View the HTML source of the PPT. Can view the currently previewed slide (slide_index=0 or omit), a specific slide by number (slide_index starting from 1), or all slides (slide_index=-1 or "all"). AI should use this tool before modifying slides to understand current state.',
+          parameters: {
+            type: 'object',
+            properties: {
+              slide_index: {
+                type: 'string',
+                description: lang === 'zh'
+                  ? '页码：0或不传=当前预览页，正数=指定页（从1开始），-1或"all"=全部幻灯片。例如：0表示当前页，1表示第一页，"all"表示全部。'
+                  : 'Slide index: 0 or omit = current slide, positive number = specific slide (1-based), -1 or "all" = all slides. E.g., 0 for current, 1 for first slide, "all" for everything.'
+              }
+            }
+          }
+        }
+      ]
+    }
+  }));
+}
+
+function unregisterMcpTools() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'unregister_node_extension_mcp', data: { ext_id: MY_EXT_ID } }));
+  }
+}
+
+/* ---- MCP Handler ---- */
+async function handleMcpCall(data) {
+  const { ext_id, tool_name, tool_params, call_id } = data;
+  if (ext_id !== MY_EXT_ID && !tool_name.includes(MY_EXT_ID)) return;
+  let resultStr = 'success';
+  try {
+    let params = tool_params;
+    if (typeof params === 'string') {
+      try { params = JSON.parse(params); } catch(e) {}
+    }
+
+    // --- generate_ppt (replace all) ---
+    if (tool_name === `${MY_EXT_ID}_generate_ppt` || tool_name.endsWith('_generate_ppt')) {
+      const htmlContent = params.html_content || '';
+      if (htmlContent.trim()) {
+        setPPTContent(htmlContent);
+        resultStr = lang === 'zh'
+          ? `PPT已生成！共 ${slidesHTML.length} 页幻灯片。用户可以在右侧面板预览和翻页。如需修改某页，使用 update_slide 工具；如需追加，使用 add_slides。`
+          : `PPT generated! ${slidesHTML.length} slides total. Preview in right panel. Use update_slide to modify a slide or add_slides to append more.`;
+      } else {
+        resultStr = lang === 'zh'
+          ? '错误：未收到HTML内容。请提供 <section class="slide"> 包裹的幻灯片HTML。'
+          : 'Error: No HTML content. Provide slides wrapped in <section class="slide"> tags.';
+      }
+    }
+    // --- add_slides (append) ---
+    else if (tool_name === `${MY_EXT_ID}_add_slides` || tool_name.endsWith('_add_slides')) {
+      const htmlContent = params.html_content || '';
+      if (htmlContent.trim()) {
+        const added = addSlidesContent(htmlContent);
+        resultStr = lang === 'zh'
+          ? `已追加 ${added} 页幻灯片！当前共 ${slidesHTML.length} 页。如需修改某页，使用 update_slide 工具。`
+          : `Added ${added} slide(s)! Total: ${slidesHTML.length} slides. Use update_slide to modify a specific slide.`;
+      } else {
+        resultStr = lang === 'zh'
+          ? '错误：未收到HTML内容。请提供 <section class="slide"> 包裹的幻灯片HTML。'
+          : 'Error: No HTML content. Provide slides wrapped in <section class="slide"> tags.';
+      }
+    }
+    // --- update_slide (modify specific) ---
+    else if (tool_name === `${MY_EXT_ID}_update_slide` || tool_name.endsWith('_update_slide')) {
+      const slideIdx = parseInt(params.slide_index);
+      const htmlContent = params.html_content || '';
+      if (isNaN(slideIdx) || slideIdx < 1 || slideIdx > slidesHTML.length) {
+        resultStr = lang === 'zh'
+          ? `错误：页码 ${params.slide_index} 无效。当前共有 ${slidesHTML.length} 页（页码从1开始）。`
+          : `Error: Slide index ${params.slide_index} is invalid. There are ${slidesHTML.length} slides (1-based).`;
+      } else if (!htmlContent.trim()) {
+        resultStr = lang === 'zh'
+          ? '错误：未收到HTML内容。请提供 <section class="slide"> 包裹的新幻灯片HTML。'
+          : 'Error: No HTML content. Provide new slide HTML wrapped in <section class="slide">.';
+      } else {
+        const ok = updateSlideContent(slideIdx - 1, htmlContent);
+        resultStr = ok
+          ? (lang === 'zh'
+            ? `第 ${slideIdx} 页已更新！当前共 ${slidesHTML.length} 页。`
+            : `Slide ${slideIdx} updated! Total: ${slidesHTML.length} slides.`)
+          : (lang === 'zh' ? `更新第 ${slideIdx} 页失败。` : `Failed to update slide ${slideIdx}.`);
+      }
+    }
+    // --- get_slide_source (view source) ---
+    else if (tool_name === `${MY_EXT_ID}_get_slide_source` || tool_name.endsWith('_get_slide_source')) {
+      const rawIdx = params.slide_index;
+      if (slidesHTML.length === 0) {
+        resultStr = lang === 'zh'
+          ? '暂无PPT内容。请先使用 generate_ppt 或 add_slides 创建幻灯片。'
+          : 'No PPT content yet. Use generate_ppt or add_slides to create slides first.';
+      } else {
+        let source = '';
+        let label = '';
+        // Determine what to return
+        if (rawIdx === undefined || rawIdx === null || String(rawIdx).trim() === '' || rawIdx === '0' || rawIdx === 0) {
+          // Current slide (0-based currentSlide)
+          source = slidesHTML[currentSlide] || '';
+          label = lang === 'zh'
+            ? `【当前页：第 ${currentSlide + 1} 页，共 ${slidesHTML.length} 页】`
+            : `[Current slide: ${currentSlide + 1}/${slidesHTML.length}]`;
+        } else if (rawIdx === '-1' || String(rawIdx).toLowerCase() === 'all') {
+          // All slides
+          source = slidesHTML.join('\n\n');
+          label = lang === 'zh'
+            ? `【全部 ${slidesHTML.length} 页幻灯片】`
+            : `[All ${slidesHTML.length} slides]`;
+        } else {
+          // Specific slide by 1-based index
+          const idx = parseInt(rawIdx);
+          if (isNaN(idx) || idx < 1 || idx > slidesHTML.length) {
+            resultStr = lang === 'zh'
+              ? `错误：页码 ${rawIdx} 无效。当前共有 ${slidesHTML.length} 页（页码从1开始）。使用0查看当前页，-1或"all"查看全部。`
+              : `Error: Slide index ${rawIdx} is invalid. There are ${slidesHTML.length} slides (1-based). Use 0 for current, -1 or "all" for all slides.`;
+            // early exit — don't set resultStr below
+            source = null;
+          } else {
+            source = slidesHTML[idx - 1];
+            label = lang === 'zh'
+              ? `【第 ${idx} 页，共 ${slidesHTML.length} 页】`
+              : `[Slide ${idx}/${slidesHTML.length}]`;
+          }
+        }
+        if (source !== null) {
+          resultStr = label + '\n\n' + source;
+        }
+      }
+    }
+    else {
+      resultStr = `Unknown tool: ${tool_name}`;
+    }
+  } catch(e) {
+    resultStr = `Error: ${e.message}`;
+  }
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'mcp_tool_result', data: { call_id, result: resultStr } }));
+  }
+}
+
+/* ================================================================
+   MARKDOWN RENDERER
+   ================================================================ */
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = text;
+  html = html.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    return '<pre><code>' + code.replace(/\n$/, '') + '</code></pre>';
+  });
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+  html = html.replace(/^(---|\*\*\*|___)$/gm, '<hr>');
+  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  html = html.replace(/^(\s*)[-*] (.+)$/gm, (_, indent, content) => {
+    return '<uli>' + content + '</uli>';
+  });
+  html = html.replace(/^(\s*)\d+\. (.+)$/gm, (_, indent, content) => {
+    return '<oli>' + content + '</oli>';
+  });
+  html = html.replace(/((?:<uli>.*<\/uli>\n?)+)/g, (m) =>
+    '<ul>' + m.replace(/<\/?uli>/g, (t) => t === '<uli>' ? '<li>' : '</li>') + '</ul>'
+  );
+  html = html.replace(/((?:<oli>.*<\/oli>\n?)+)/g, (m) =>
+    '<ol>' + m.replace(/<\/?oli>/g, (t) => t === '<oli>' ? '<li>' : '</li>') + '</ol>'
+  );
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  html = html.replace(/^\|(.+)\|$/gm, (match) => {
+    const cells = match.split('|').filter(c => c.trim());
+    if (cells.every(c => /^[-: ]+$/.test(c.trim()))) return '';
+    return '<tr>' + cells.map(c => '<td>' + c.trim() + '</td>').join('') + '</tr>';
+  });
+  const blocks = html.split(/\n\n+/);
+  html = blocks.map(block => {
+    block = block.trim();
+    if (!block) return '';
+    if (/^<(pre|ul|ol|h[1-4]|hr|blockquote|table|tr|li)/.test(block)) return block;
+    return '<p>' + block.replace(/\n/g, '<br>') + '</p>';
+  }).join('\n');
+  return html;
+}
+
+/* ================================================================
+   MESSAGE RENDERING
+   ================================================================ */
+function render(list) {
+  _pendingList = list;
+  if (!_pendingList || !_pendingList.length) {
+    if (_lastMessagesHash === '__empty__') return;
+    _lastMessagesHash = '__empty__';
+    _prevMessageCount = 0;
+    _rafPending = false;
+    msgs.innerHTML = `<div id="empty"><i class="fa-regular fa-comments"></i><span id="empty-text">${t('empty')}</span></div>`;
+    return;
+  }
+  const hashParts = _pendingList.map(m => `${m.role}:${m.pure_content || m.content || ''}`);
+  const newHash = hashParts.join('|');
+  if (newHash === _lastMessagesHash) return;
+  _lastMessagesHash = newHash;
+  if (_rafPending) return;
+  _rafPending = true;
+  requestAnimationFrame(() => {
+    _rafPending = false;
+    const list = _pendingList;
+    if (!list) return;
+    const newCount = list.length;
+    const html = list.map((m, i) => {
+      if (m.role === 'system') return '';
+      const content = m.pure_content || m.content || '';
+      const rendered = renderMarkdown(content);
+      const isNew = i >= _prevMessageCount;
+      return `
+        <div class="msg ${m.role}${isNew ? ' new-msg' : ''}">
+          <div class="msg-inner">
+            <div class="icon">
+              ${m.role === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>'}
+            </div>
+            <div class="bubble">${rendered}</div>
+          </div>
+        </div>`;
+    }).join('');
+    _prevMessageCount = newCount;
+    const wasAtBottom = msgs.scrollHeight - msgs.scrollTop - msgs.clientHeight < 60;
+    msgs.innerHTML = html;
+    if (wasAtBottom) {
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+  });
+}
+
+/* ---- Send / Clear ---- */
+function send() {
+  const t = input.value.trim();
+  if (!t) return;
+  ws.send(JSON.stringify({ type: 'set_user_input', data: { text: t } }));
+  ws.send(JSON.stringify({ type: 'trigger_send_message' }));
+  input.value = ''; input.style.height = 'auto';
+  if (isMobileLayout && !chatVisible) showMobileChat();
+}
+function clearMessages() {
+  _lastMessagesHash = '';
+  _pendingList = null;
+  _rafPending = false;
+  _prevMessageCount = 0;
+  ws.send(JSON.stringify({ type: 'trigger_clear_message' }));
+}
+function closeWindow() {
+  _closing = true;
+  unregisterMcpTools();
+  window.close();
+}
+
+/* ---- Split Pane Resize ---- */
+function initSplitResize() {
+  const handle = $('#splitHandle');
+  let startX, startWidth;
+  let dragging = false;
+  function onStart(clientX) {
+    if (isMobileLayout || !chatVisible) return;
+    startX = clientX;
+    startWidth = chatPanel.getBoundingClientRect().width;
+    handle.classList.add('active');
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    dragging = true;
+  }
+  function onMove(clientX) {
+    if (!dragging) return;
+    const dx = clientX - startX;
+    const newWidth = startWidth + dx;
+    if (newWidth >= 240 && newWidth <= window.innerWidth * 0.6) {
+      chatPanel.style.width = newWidth + 'px';
+      chatPanel.style.flex = 'none';
+    }
+    fitSlideViewport();
+  }
+  function onEnd() {
+    handle.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+    dragging = false;
+    fitSlideViewport();
+  }
+  handle.addEventListener('mousedown', e => { e.preventDefault(); onStart(e.clientX); });
+  document.addEventListener('mousemove', e => onMove(e.clientX));
+  document.addEventListener('mouseup', onEnd);
+  handle.addEventListener('touchstart', e => {
+    e.preventDefault();
+    onStart(e.touches[0].clientX);
+  }, { passive: false });
+  document.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    onMove(e.touches[0].clientX);
+  }, { passive: false });
+  document.addEventListener('touchend', onEnd);
+}
+
+/* ---- Mobile Layout Detection ---- */
+function checkMobileLayout() {
+  const wasMobile = isMobileLayout;
+  isMobileLayout = window.innerWidth <= 767;
+  if (isMobileLayout && !wasMobile) {
+    chatPanel.classList.add('hidden');
+    chatVisible = false;
+    chatPanel.style.display = 'flex';
+    chatPanel.style.width = '';
+    chatPanel.style.flex = '';
+    chatPanel.style.opacity = '';
+    chatPanel.style.minWidth = '';
+    chatPanel.style.overflow = '';
+    $('#splitHandle').style.display = 'none';
+  } else if (!isMobileLayout && wasMobile) {
+    chatPanel.classList.remove('hidden');
+    chatVisible = true;
+    chatPanel.style.display = 'flex';
+    chatPanel.style.width = '40%';
+    chatPanel.style.flex = 'none';
+    chatPanel.style.opacity = '1';
+    chatPanel.style.minWidth = '260px';
+    chatPanel.style.overflow = '';
+    $('#splitHandle').style.display = '';
+  }
+  updateChatToggleLabel();
+  fitSlideViewport();
+}
+
+/* ---- Tab Events ---- */
+$('#tabPreview').addEventListener('click', () => switchTab('preview'));
+$('#tabCode').addEventListener('click', () => switchTab('code'));
+
+/* ---- Keyboard Shortcuts ---- */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  if (fullscreenOverlay.classList.contains('active')) return; // fullscreen handles its own keys
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextSlide(); }
+  if ((e.ctrlKey || e.metaKey) && e.key === '0') { e.preventDefault(); resetZoom(); }
+});
+
+/* ---- Touch Swipe for Slides ---- */
+let touchStartX = 0, touchStartY = 0;
+previewContent.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+  }
+}, { passive: true });
+previewContent.addEventListener('touchend', e => {
+  if (!e.changedTouches.length) return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+    if (dx > 0) prevSlide(); else nextSlide();
+  }
+});
+
+/* ---- Pinch-to-zoom ---- */
+let pinchStartDist = 0;
+let pinchStartZoom = 1.0;
+previewContent.addEventListener('touchstart', e => {
+  if (e.touches.length === 2) {
+    pinchStartDist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    pinchStartZoom = _zoomLevel;
+  }
+}, { passive: true });
+previewContent.addEventListener('touchmove', e => {
+  if (e.touches.length === 2 && pinchStartDist > 0) {
+    const dist = Math.hypot(
+      e.touches[0].clientX - e.touches[1].clientX,
+      e.touches[0].clientY - e.touches[1].clientY
+    );
+    const newZoom = pinchStartZoom * (dist / pinchStartDist);
+    setZoom(newZoom);
+  }
+}, { passive: true });
+previewContent.addEventListener('touchend', e => {
+  if (e.touches.length < 2) pinchStartDist = 0;
+});
+
+/* ---- Compact Mode ---- */
+function checkCompactMode() {
+  if (window.innerHeight < 200) {
+    document.documentElement.classList.add('compact');
+    document.body.classList.add('compact');
+  } else {
+    document.documentElement.classList.remove('compact');
+    document.body.classList.remove('compact');
+  }
+}
+
+/* ---- Input Events ---- */
+input.addEventListener('input', () => {
+  autoHeight();
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'set_user_input', data: { text: input.value } }));
+  }
+});
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+});
+btn.addEventListener('click', send);
+clearBtn.addEventListener('click', clearMessages);
+function autoHeight() { input.style.height = 'auto'; input.style.height = Math.min(input.scrollHeight, 100) + 'px'; }
+
+window.addEventListener('beforeunload', () => {
+  _closing = true;
+  unregisterMcpTools();
+});
+
+/* ---- Init ---- */
+checkCompactMode();
+window.addEventListener('resize', () => {
+  checkCompactMode();
+  checkMobileLayout();
+  fitSlideViewport();
+});
+updateAllTexts();
+getExtId();
+
+// Try to restore cached PPT
+const restored = loadCache();
+if (restored) {
+  console.log('[AI-PPT] ' + t('cacheRestored', slidesHTML.length));
+}
+
+initWS();
+initSplitResize();
+chatPanel.style.width = '40%';
+chatPanel.style.flex = 'none';
+checkMobileLayout();
+fitSlideViewport();
+</script>
+</body>
+</html>
