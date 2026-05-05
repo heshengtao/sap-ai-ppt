@@ -533,7 +533,7 @@ header .logo i {
 }
 #zoomDisplay:hover { color: var(--accent); border-color: var(--accent); }
 
-/* Additional toolbar buttons (download, reset PPT) */
+/* Additional toolbar buttons (download, import, reset PPT) */
 .toolbar-actions {
   display: flex; align-items: center; gap: 4px;
 }
@@ -852,6 +852,8 @@ body.compact .compact-close-btn:hover {
     <i class="fa-solid fa-xmark"></i>
   </button>
 
+  <input type="file" id="importInput" accept=".html" style="display:none;" />
+
   <!-- Fullscreen Presentation Overlay -->
   <div id="fullscreenOverlay">
     <button class="fs-exit" onclick="exitFullscreen()" title="Exit fullscreen (Esc)"><i class="fa-solid fa-xmark"></i></button>
@@ -916,6 +918,7 @@ body.compact .compact-close-btn:hover {
             <span class="nav-sep">|</span>
             <div class="toolbar-actions">
               <button id="btnFullscreen" onclick="enterFullscreen()" title="Fullscreen presentation" disabled><i class="fa-solid fa-play"></i></button>
+              <button id="btnImport" onclick="importSource()" title="Import source"><i class="fa-solid fa-upload"></i></button>
               <button id="btnDownload" onclick="downloadSource()" title="Download source" disabled><i class="fa-solid fa-download"></i></button>
               <button id="btnResetPPT" onclick="resetPPT()" title="Reset PPT" disabled><i class="fa-solid fa-rotate-left"></i></button>
             </div>
@@ -960,7 +963,7 @@ body.compact .compact-close-btn:hover {
    - Fullscreen presentation mode (click/arrow keys/wheel to navigate, Esc to exit)
    - localStorage caching with restore
    - Per-slide code viewing with scroll fix
-   - Download source + Reset PPT
+   - Download source + Reset PPT + Import Source
    - Responsive toolbar with wrapping
    ================================================================ */
 
@@ -983,6 +986,7 @@ const chatPanel = $('#chatPanel');
 const chatToggleBtn = $('#chatToggleBtn');
 const zoomDisplay = $('#zoomDisplay');
 const slideViewport = $('#slideViewport');
+const btnImport = $('#btnImport');
 const btnDownload = $('#btnDownload');
 const btnResetPPT = $('#btnResetPPT');
 const btnFullscreen = $('#btnFullscreen');
@@ -990,6 +994,7 @@ const fullscreenOverlay = $('#fullscreenOverlay');
 const fsSlideFrame = $('#fsSlideFrame');
 const fsCounter = $('#fsCounter');
 const fsHint = $('#fsHint');
+const importInput = $('#importInput');
 
 let ws;
 let MY_EXT_ID = '';
@@ -1046,7 +1051,9 @@ const i18n = {
     zoomIn: '放大',
     zoomOut: '缩小',
     closeWindow: '关闭窗口',
-    download: '下载源码',
+    import: '导入已下载的HTML',
+    importConfirm: '导入新文件将覆盖当前的 PPT 内容，确定要继续吗？',
+    download: '下载演示文稿',
     resetPPT: '重置PPT',
     slideLabel: '幻灯片:',
     allSlides: '全部幻灯片',
@@ -1086,7 +1093,9 @@ const i18n = {
     zoomIn: 'Zoom in',
     zoomOut: 'Zoom out',
     closeWindow: 'Close window',
-    download: 'Download source',
+    import: 'Import downloaded HTML',
+    importConfirm: 'Importing will overwrite your current presentation. Do you want to continue?',
+    download: 'Download presentation',
     resetPPT: 'Reset PPT',
     slideLabel: 'Slide:',
     allSlides: 'All Slides',
@@ -1136,6 +1145,7 @@ function updateAllTexts() {
   safeTitle('#zoomDisplay', t('zoomReset'));
   safeTitle('#btnZoomIn', t('zoomIn'));
   safeTitle('#btnZoomOut', t('zoomOut'));
+  safeTitle('#btnImport', t('import'));
   safeTitle('#btnDownload', t('download'));
   safeTitle('#btnResetPPT', t('resetPPT'));
   safeTitle('#btnFullscreen', t('fullscreen'));
@@ -1187,7 +1197,10 @@ function parseSlides(htmlContent) {
     slides.push(match[0]);
   }
   if (slides.length === 0 && htmlContent.trim()) {
-    slides.push(`<section class="slide">${htmlContent}</section>`);
+    // Basic fallback if user uploads something without section.slide
+    if (!htmlContent.includes('<html')) {
+        slides.push(`<section class="slide">${htmlContent}</section>`);
+    }
   }
   return slides;
 }
@@ -1327,7 +1340,6 @@ function saveCache() {
     };
     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
   } catch(e) {
-    // localStorage may be full
     console.warn('[AI-PPT] Failed to cache slides:', e.message);
   }
 }
@@ -1370,10 +1382,6 @@ function setPPTContent(htmlContent) {
   saveCache();
 }
 
-/**
- * Add one or more slides to the end. `html_content` can contain
- * one or multiple <section class="slide"> elements.
- */
 function addSlidesContent(htmlContent) {
   const newSlides = parseSlides(htmlContent);
   if (newSlides.length === 0) return 0;
@@ -1391,12 +1399,8 @@ function addSlidesContent(htmlContent) {
   return newSlides.length;
 }
 
-/**
- * Update a specific slide by index (0-based).
- */
 function updateSlideContent(index, htmlContent) {
   if (index < 0 || index >= slidesHTML.length) return false;
-  // Parse the new content — if it contains a <section class="slide">, extract inner content
   const parsed = parseSlides(htmlContent);
   if (parsed.length > 0) {
     slidesHTML[index] = parsed[0];
@@ -1424,14 +1428,384 @@ function resetPPT() {
   $('#codeInfo').textContent = '';
   $('#pptInfo').textContent = '';
   updateToolbarButtons();
-  // Switch to preview tab
   if (currentTab === 'code') switchTab('preview');
 }
 
+/* ================================================================
+   IMPORT / UPLOAD SOURCE HTML
+   ================================================================ */
+function importSource() {
+  if (slidesHTML.length > 0) {
+    if (!confirm(t('importConfirm'))) return;
+  }
+  importInput.click();
+}
+
+importInput.addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const content = evt.target.result;
+    setPPTContent(content);
+    e.target.value = ''; // Reset to allow re-uploading the exact same file
+  };
+  reader.readAsText(file);
+});
+
+
+/* ================================================================
+   STANDALONE PRESENTATION DOWNLOAD
+   Generates a fully interactive, offline presentation HTML file 
+   ================================================================ */
 function downloadSource() {
   if (slidesHTML.length === 0) return;
-  const content = slidesHTML.join('\n');
-  const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
+
+  const isDark = document.body.classList.contains('dark');
+  const themeClass = isDark ? 'dark' : '';
+  
+  // Format slides structure
+  const slidesMarkup = slidesHTML.map((slide, idx) => {
+    const isActive = idx === 0 ? 'active' : '';
+    let s = slide.trim();
+    if (s.startsWith('<section')) {
+      s = s.replace(/class\s*=\s*["']([^"']*)["']/, (match, classes) => {
+        let cls = classes;
+        if (!cls.includes('slide')) cls += ' slide';
+        if (idx === 0) cls += ' active';
+        return `class="${cls.trim()}"`;
+      });
+    } else {
+      s = `<section class="slide ${isActive}">${s}</section>`;
+    }
+    return s;
+  }).join('\n');
+
+  // Multi-lingual text for Standalone HUD
+  const hudPrevText = lang === 'zh' ? '上一页' : 'Previous';
+  const hudNextText = lang === 'zh' ? '下一页' : 'Next';
+  const hudThemeText = lang === 'zh' ? '切换主题' : 'Toggle Theme';
+  const hudFSText = lang === 'zh' ? '全屏演示' : 'Fullscreen Presentation';
+
+  // Build standalone single-page PPT presentation application template
+  const template = `<!DOCTYPE html>
+<html lang="${lang === 'zh' ? 'zh-CN' : 'en'}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>${lang === 'zh' ? 'AI 演示文稿' : 'AI Presentation'}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --accent: #007AFF;
+    }
+    body.dark {
+      --accent: #0A84FF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+      background: #ffffff; color: #1d1d1f;
+      transition: background 0.3s cubic-bezier(0.25, 0.1, 0.25, 1), color 0.3s;
+      display: flex; align-items: center; justify-content: center;
+      user-select: none; -webkit-user-select: none;
+    }
+    body.dark {
+      background: #1c1c1e; color: #f5f5f7;
+    }
+    
+    /* Playback Viewport - 16:9 Aspect Ratio */
+    #viewport {
+      width: 1280px; height: 720px;
+      background: inherit;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      transform-origin: center center;
+      flex-shrink: 0;
+      transition: box-shadow 0.3s;
+    }
+    body.dark #viewport {
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    
+    .slide {
+      width: 100%; height: 100%;
+      padding: 5% 8%; overflow: hidden;
+      position: absolute; inset: 0;
+      background: inherit; color: inherit;
+    }
+    /* 强制覆盖AI生成的内联 display: flex/block，保证非当前页绝对隐藏 */
+    .slide:not(.active) {
+      display: none !important;
+    }
+    .slide.active {
+      /* 如果AI没有指定内联样式，默认 fallback 给 flex 布局 */
+      display: flex;
+    }
+    
+    /* Presentation typography inside standalone file */
+    .slide h1 { font-size: 2.8em; font-weight: 700; margin-bottom: 24px; line-height: 1.2; letter-spacing: -0.02em; }
+    .slide h2 { font-size: 2.0em; font-weight: 600; margin-bottom: 18px; line-height: 1.3; }
+    .slide h3 { font-size: 1.5em; font-weight: 600; margin-bottom: 12px; }
+    .slide p { font-size: 1.15em; line-height: 1.6; color: #6e6e73; margin-bottom: 16px; }
+    body.dark .slide p { color: #98989d; }
+    .slide ul, .slide ol { margin-left: 24px; margin-bottom: 20px; font-size: 1.15em; line-height: 1.6; }
+    .slide li { margin-bottom: 8px; }
+    
+    /* Elegant Hover HUD overlay controls */
+    #hud {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 9999px; padding: 6px 14px;
+      display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+      opacity: 1; transition: opacity 0.5s, transform 0.5s cubic-bezier(0.32, 0.08, 0.24, 1);
+      z-index: 10000;
+    }
+    body.dark #hud {
+      background: rgba(44, 44, 46, 0.72);
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+    }
+    /* Auto-hide states */
+    #hud.autohide {
+      opacity: 0; pointer-events: none; transform: translate(-50%, 150px);
+    }
+    body.nocursor, body.nocursor * {
+      cursor: none !important;
+    }
+
+    #hud button {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: none; background: transparent; color: #6e6e73;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; font-size: 13px;
+    }
+    body.dark #hud button { color: #98989d; }
+    #hud button:hover {
+      background: rgba(0, 122, 255, 0.08);
+      color: var(--accent);
+    }
+    #hud button:disabled {
+      opacity: 0.25; cursor: not-allowed;
+    }
+    #hud .sep {
+      width: 1px; height: 16px; background: rgba(0,0,0,0.08);
+    }
+    body.dark #hud .sep {
+      background: rgba(255,255,255,0.08);
+    }
+    #slide-indicator {
+      font-size: 12px; font-weight: 600; color: #1d1d1f;
+      min-width: 52px; text-align: center; font-variant-numeric: tabular-nums;
+    }
+    body.dark #slide-indicator { color: #f5f5f7; }
+    
+    /* Desktop edge click elements */
+    .edge-nav {
+      position: fixed; top: 0; bottom: 0; width: 10%;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity 0.3s; z-index: 900;
+      font-size: 24px; color: rgba(128,128,128,0.4);
+    }
+    .edge-nav:hover { opacity: 1; }
+    .edge-nav.left { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.02), transparent); }
+    .edge-nav.right { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.02), transparent); }
+    body.dark .edge-nav.left { background: linear-gradient(to right, rgba(255,255,255,0.02), transparent); }
+    body.dark .edge-nav.right { background: linear-gradient(to left, rgba(255,255,255,0.02), transparent); }
+  </style>
+</head>
+<body class="${themeClass}">
+  
+  <div class="edge-nav left" onclick="prevSlide(event)"><i class="fa-solid fa-chevron-left"></i></div>
+  <div class="edge-nav right" onclick="nextSlide(event)"><i class="fa-solid fa-chevron-right"></i></div>
+
+  <div id="viewport">
+    ${slidesMarkup}
+  </div>
+
+  <div id="hud">
+    <button id="btnTheme" onclick="toggleTheme()" title="${hudThemeText}"><i class="fa-solid fa-moon"></i></button>
+    <span class="sep"></span>
+    <button id="btnPrev" onclick="prevSlide(event)" title="${hudPrevText}"><i class="fa-solid fa-chevron-left"></i></button>
+    <span id="slide-indicator">1 / 1</span>
+    <button id="btnNext" onclick="nextSlide(event)" title="${hudNextText}"><i class="fa-solid fa-chevron-right"></i></button>
+    <span class="sep"></span>
+    <button id="btnFS" onclick="toggleFullscreen()" title="${hudFSText}"><i class="fa-solid fa-expand"></i></button>
+  </div>
+
+  <script>
+    let currentSlide = 0;
+    const slides = document.querySelectorAll('.slide');
+    const indicator = document.getElementById('slide-indicator');
+    const viewport = document.getElementById('viewport');
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    const btnTheme = document.getElementById('btnTheme');
+    const hud = document.getElementById('hud');
+
+    // Autoscale layout calculations for 16:9 ratio
+    function resize() {
+      const pw = window.innerWidth;
+      const ph = window.innerHeight;
+      const targetRatio = 1280 / 720;
+      const currentRatio = pw / ph;
+      let scale = 1;
+      if (currentRatio > targetRatio) {
+        scale = ph / 720;
+      } else {
+        scale = pw / 1280;
+      }
+      scale = Math.min(scale, (pw - 24) / 1280, (ph - 24) / 720);
+      viewport.style.transform = \`scale(\${scale})\`;
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('load', resize);
+    resize();
+
+    function updateDisplay() {
+      slides.forEach((s, idx) => {
+        if (idx === currentSlide) {
+          s.classList.add('active');
+        } else {
+          s.classList.remove('active');
+        }
+      });
+      indicator.textContent = \`\${currentSlide + 1} / \${slides.length}\`;
+      btnPrev.disabled = currentSlide === 0;
+      btnNext.disabled = currentSlide === slides.length - 1;
+    }
+
+    function prevSlide(e) {
+      if (e) e.stopPropagation();
+      if (currentSlide > 0) {
+        currentSlide--;
+        updateDisplay();
+        showHudBriefly();
+      }
+    }
+
+    function nextSlide(e) {
+      if (e) e.stopPropagation();
+      if (currentSlide < slides.length - 1) {
+        currentSlide++;
+        updateDisplay();
+        showHudBriefly();
+      }
+    }
+
+    function toggleTheme() {
+      const isDark = document.body.classList.toggle('dark');
+      const icon = btnTheme.querySelector('i');
+      if (isDark) {
+        icon.className = 'fa-solid fa-sun';
+      } else {
+        icon.className = 'fa-solid fa-moon';
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    if (document.body.classList.contains('dark')) {
+      btnTheme.querySelector('i').className = 'fa-solid fa-sun';
+    }
+
+    // Keyboards
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        currentSlide = 0;
+        updateDisplay();
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        currentSlide = slides.length - 1;
+        updateDisplay();
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+      showHudBriefly();
+    });
+
+    // Tap anywhere to advance (ignoring buttons and specific ui elements)
+    document.body.addEventListener('click', e => {
+      if (e.target.closest('#hud') || e.target.closest('.edge-nav')) return;
+      if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) return;
+      
+      nextSlide();
+    });
+
+    // Throttled mousewheel controls
+    let wheelThrottle = false;
+    window.addEventListener('wheel', e => {
+      if (wheelThrottle) return;
+      wheelThrottle = true;
+      if (e.deltaY > 0) {
+        nextSlide();
+      } else {
+        prevSlide();
+      }
+      setTimeout(() => { wheelThrottle = false; }, 600);
+    }, { passive: true });
+
+    // Touch navigations
+    let touchStartX = 0, touchStartY = 0;
+    document.addEventListener('touchstart', e => {
+      if (e.touches.length === 1) {
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!e.changedTouches.length) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        if (dx > 0) prevSlide(); else nextSlide();
+      }
+    });
+
+    // HUD Auto-hide on inactivity (Presenter Deck standard behavior)
+    let hudTimer;
+    function showHudBriefly() {
+      hud.classList.remove('autohide');
+      document.body.classList.remove('nocursor');
+      clearTimeout(hudTimer);
+      hudTimer = setTimeout(() => {
+        if (slides.length > 0) {
+          hud.classList.add('autohide');
+          document.body.classList.add('nocursor');
+        }
+      }, 3000);
+    }
+    document.addEventListener('mousemove', showHudBriefly);
+    document.addEventListener('click', showHudBriefly);
+    showHudBriefly();
+
+    updateDisplay();
+  <\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([template], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
